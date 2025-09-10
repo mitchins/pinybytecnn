@@ -1,0 +1,212 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pinybytecnn"
+version = "1.0.0"
+description = "Pure Python ByteCNN for edge deployment"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "PinyByteCNN Contributors"}
+]
+requires-python = ">=3.10"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["neural-network", "cnn", "text-classification", "edge-computing", "pure-python"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+    "mypy>=1.0.0", 
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+    "coverage>=7.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/pinybytecnn"
+Repository = "https://github.com/yourusername/pinybytecnn"
+Issues = "https://github.com/yourusername/pinybytecnn/issues"
+
+[tool.setuptools.packages.find]
+include = ["tinybytecnn*"]
+
+[tool.ruff]
+# Same as Black
+line-length = 100
+indent-width = 4
+
+# Python 3.10 minimum
+target-version = "py310"
+
+[tool.ruff.lint]
+# Performance-focused exclusions
+ignore = [
+    # Performance: Allow these for speed
+    "PERF401",  # Allow manual list comprehension (sometimes faster)
+    "PERF402",  # Allow manual list copy (explicit is better)
+    "PERF403",  # Allow dict comprehensions in loops (readability)
+    
+    # Allow standard random for model initialization (not crypto)
+    "S311",     # random.uniform for weight initialization is fine
+    
+    # Math notation: Allow standard ML variable names
+    "N806",     # Allow uppercase math variables (F, W, K, etc.)
+    
+    # Loop variables: Sometimes we need enumerate but don't use index
+    "B007",     # Allow unused loop control variables
+    
+    # Code complexity (performance critical code needs flexibility)
+    "C901",     # Allow complex functions (optimized implementations)
+    "PLR0912",  # Too many branches (needed for optimizations)
+    "PLR0913",  # Too many arguments (model configs)
+    "PLR0915",  # Too many statements (unrolled loops)
+    
+    # Style rules that impact performance
+    "SIM108",   # Allow if-else instead of ternary (can be clearer)
+    "SIM105",   # Allow try-except-pass (bounds checking)
+    "RET504",   # Allow variable before return (debugging)
+    
+    # Documentation (keep code compact)
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    "D200", "D201", "D202", "D203", "D204", "D205", "D206", "D207",
+    "D208", "D209", "D210", "D211", "D212", "D213", "D214", "D215",
+    "D300", "D301", "D400", "D401", "D402", "D403", "D404", "D405",
+    "D406", "D407", "D408", "D409", "D410", "D411", "D412", "D413",
+    "D414", "D415", "D416", "D417", "D418", "D419",
+    
+    # Allow some patterns for readability
+    "E501",     # Line too long (some math expressions need space)
+    "E731",     # Allow lambda assignments (functional style)
+    "F401",     # Unused imports (for type hints)
+    "F841",     # Unused variables (loop counters)
+    
+    # Type annotation rules (flexible for performance)
+    "ANN001", "ANN002", "ANN003",
+]
+
+select = [
+    # Critical errors
+    "E9",     # Runtime errors (syntax, etc)
+    "F63",    # Incorrect use of operators
+    "F7",     # Syntax errors  
+    "F82",    # Undefined names
+    "F811",   # Redefinition of unused
+    "F821",   # Undefined name
+    "E722",   # Bare except
+    
+    # Important quality checks
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "S",      # flake8-bandit (security)
+    "Q",      # flake8-quotes
+    "RUF",    # Ruff-specific rules
+    
+    # Performance hints (but we can ignore specific ones)
+    "PERF",   # Performance linting
+]
+
+# Exclude test files and experiments from strict linting
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["S101", "PLR2004", "S105"]  # Allow asserts and magic values in tests
+"benchmarks/*.py" = ["T201", "T203"]  # Allow print statements in benchmarks
+"scripts/*.py" = ["T201"]  # Allow print statements in scripts
+"experiments_archive/*.py" = ["ALL"]  # Ignore all rules for archived experiments
+
+[tool.ruff.lint.isort]
+force-single-line = false
+lines-after-imports = 2
+known-first-party = ["tinybytecnn"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15  # Allow complex functions for optimized code
+
+[tool.ruff.lint.pylint]
+max-args = 10  # Model constructors need many arguments
+max-branches = 20  # Optimized code may have many branches
+max-returns = 6
+max-statements = 100  # Allow long functions for unrolled loops
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Preserve some formatting for readability
+docstring-code-format = false
+docstring-code-line-length = 80
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# Performance: Don't require type annotations everywhere
+disallow_untyped_defs = false
+check_untyped_defs = false
+disallow_any_generics = false
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "benchmarks.*"
+ignore_errors = true
+
+[tool.coverage.run]
+source = ["tinybytecnn"]
+omit = [
+    "*/tests/*",
+    "*/benchmarks/*",
+    "*/experiments_archive/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "pass",
+]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.bandit]
+exclude_dirs = ["tests", "benchmarks", "experiments_archive"]
+skips = [
+    "B101",  # Allow assert statements (used for validation)
+    "B601",  # No shell usage in this project
+    "B602",  # No shell usage in this project
+]
