@@ -94,15 +94,15 @@ jobs:
 
     - name: Verify model accuracy
       run: |
-        python -c "
+        python -c '
 import json
-with open('tests/bytecnn_10k_reference.json', 'r') as f:
+with open("tests/bytecnn_10k_reference.json", "r") as f:
     model_data = json.load(f)
-    print(f\"Model: {model_data['model_info']['name']}\")
-    print(f\"Parameters: {model_data['model_info']['parameters']:,}\")
-    print(f\"Accuracy: {model_data['model_info']['accuracy']:.2%}\")
-    assert model_data['model_info']['accuracy'] > 0.75, 'Accuracy below threshold'
-        "
+    print(f"Model: {model_data[\"model_info\"][\"name\"]}")
+    print(f"Parameters: {model_data[\"model_info\"][\"parameters\"]:,}")
+    print(f"Accuracy: {model_data[\"model_info\"][\"accuracy\"]:.2%}")
+    assert model_data["model_info"]["accuracy"] > 0.75, "Accuracy below threshold"
+        '
 
   security:
     runs-on: ubuntu-latest
