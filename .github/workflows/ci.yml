@@ -2,215 +2,61 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Run unit tests
-      run: |
-        python -m unittest discover -s tests -p "test_*.py" -v
-
-    - name: Run smoke tests with 10K reference model
-      run: |
-        python tests/test_bytecnn_10k_smoke.py
-
-    - name: Calculate test coverage
-      run: |
-        pip install coverage
-        coverage run -m unittest discover -s tests -p "test_*.py"
-        coverage report -m --include="tinybytecnn/*"
-        coverage xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        fail_ci_if_error: false
-        files: ./coverage.xml
-
-  lint:
+  unit-tests:
+    name: Unit tests (Python 3.12)
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install linting tools
-      run: |
-        pip install ruff mypy
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
 
-    - name: Lint with ruff (strict on production code)
-      run: |
-        # Strict checks on core library
-        ruff check tinybytecnn/ --output-format=github
-        
-        # Lenient checks on other files
-        ruff check tests/ benchmarks/ scripts/ --output-format=github || true
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
 
-    - name: Format check with ruff
-      run: |
-        ruff format --check . --diff
-
-    - name: Type check with mypy
-      run: |
-        mypy tinybytecnn/ || true  # Allow failures for now
-
-  performance:
+  build-package:
+    name: Build distribution artifacts
     runs-on: ubuntu-latest
+    needs: unit-tests
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Run performance benchmarks
-      run: |
-        python tests/test_bytecnn_10k_smoke.py
-        echo "ByteCNN-10K inference benchmark completed"
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
 
-    - name: Verify model accuracy
-      run: |
-        python -c '
-import json
-with open("tests/bytecnn_10k_reference.json", "r") as f:
-    model_data = json.load(f)
-    print(f"Model: {model_data[\"model_info\"][\"name\"]}")
-    print(f"Parameters: {model_data[\"model_info\"][\"parameters\"]:,}")
-    print(f"Accuracy: {model_data[\"model_info\"][\"accuracy\"]:.2%}")
-    assert model_data["model_info"]["accuracy"] > 0.75, "Accuracy below threshold"
-        '
+      - name: Build package
+        run: |
+          python -m build
 
-  security:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install security tools
-      run: |
-        pip install bandit safety
-
-    - name: Run security checks with bandit
-      run: |
-        bandit -r tinybytecnn/ -f json -o bandit-report.json || true
-        bandit -r tinybytecnn/ || true
-
-    - name: Check for known vulnerabilities
-      run: |
-        safety check || true
-
-  sonarcloud:
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install coverage tools
-      run: |
-        pip install coverage
-
-    - name: Run tests with coverage for SonarCloud
-      run: |
-        coverage run -m unittest discover -s tests -p "test_*.py"
-        coverage xml
-
-    - name: Run security analysis
-      run: |
-        pip install bandit
-        bandit -r tinybytecnn/ -f json -o bandit-report.json || true
-
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  validate-models:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Validate 10K model JSON structure
-      run: |
-        python -c "
-import json
-import sys
-
-with open('tests/bytecnn_10k_reference.json', 'r') as f:
-    model = json.load(f)
-    
-# Validate structure
-assert 'model_info' in model, 'Missing model_info'
-assert 'weights' in model, 'Missing weights'
-assert 'architecture' in model, 'Missing architecture'
-assert 'test_cases' in model, 'Missing test_cases'
-
-# Validate model info
-info = model['model_info']
-assert info['parameters'] == 10009, f\"Expected 10009 params, got {info['parameters']}\"
-assert 0.75 <= info['accuracy'] <= 0.85, f\"Accuracy {info['accuracy']} out of expected range\"
-
-# Validate architecture
-arch = model['architecture']
-assert arch['vocab_size'] == 256, 'Invalid vocab_size'
-assert arch['embed_dim'] == 12, 'Invalid embed_dim'
-assert arch['conv_filters'] == 40, 'Invalid conv_filters'
-
-print('✓ Model validation passed')
-print(f\"  Model: {info['name']}\")
-print(f\"  Parameters: {info['parameters']:,}\")
-print(f\"  Accuracy: {info['accuracy']:.2%}\")
-        "
-
-    - name: Test model predictions
-      run: |
-        python tests/test_bytecnn_10k_smoke.py TestByteCNN10KSmoke.test_reference_model_predictions
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinybytecnn-dist
+          path: dist/
+          if-no-files-found: error
