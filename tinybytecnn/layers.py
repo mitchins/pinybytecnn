@@ -44,17 +44,36 @@ def _zeros_2d(rows: int, cols: int) -> list[list[float]]:
 class Conv1DMaxPool:
     def __init__(
         self,
-        in_dim: int,
-        out_channels: int,
-        kernel_size: int,
+        in_dim: int | None = None,
+        out_channels: int = 0,
+        kernel_size: int = 0,
         padding: int = 0,
         bias: bool = True,
         init_scale: float = 0.02,
+        *,
+        in_channels: int | None = None,
     ):
+        """Create the fused Conv1D → ReLU → GlobalMaxPool layer.
+
+        Historically the class accepted ``in_dim`` as the first positional
+        argument.  Some of the newer tests exercise an ``in_channels`` keyword
+        (to match the configuration dictionaries used elsewhere).  To remain
+        backwards compatible we accept both names and validate that, when both
+        are provided, they agree.
+        """
+
+        if in_dim is None:
+            if in_channels is None:
+                raise ValueError("in_dim or in_channels must be provided")
+            in_dim = in_channels
+        elif in_channels is not None and in_channels != in_dim:
+            raise ValueError("in_dim and in_channels must match when both provided")
+
         if in_dim <= 0 or out_channels <= 0 or kernel_size <= 0:
             raise ValueError("in_dim, out_channels, kernel_size must be positive")
 
         self.in_dim = in_dim
+        self.in_channels = in_dim
         self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.padding = padding
