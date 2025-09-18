@@ -210,3 +210,8 @@ skips = [
     "B601",  # No shell usage in this project
     "B602",  # No shell usage in this project
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
