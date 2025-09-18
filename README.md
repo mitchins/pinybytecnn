@@ -1,5 +1,7 @@
 # PinyByteCNN
 
+[![Codecov](https://codecov.io/gh/yourusername/pinybytecnn/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/pinybytecnn)
+
 Pure Python implementation of ByteCNN for toxicity detection and edge deployment.
 
 ## Overview
