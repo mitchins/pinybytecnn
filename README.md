@@ -48,12 +48,8 @@ ByteCNN processes text through the following pipeline:
 
 ## Installation
 
-Clone the repository and import directly:
-
 ```bash
-git clone <repository-url>
-cd PinyByteCNN
-python3 -c "from tinybytecnn.model import ByteCNN; print('Success')"
+pip install pinybytecnn
 ```
 
 ## Usage
@@ -141,47 +137,11 @@ For detailed architecture information and training procedures, see [ARCHITECTURE
 
 ## Development
 
-### Setup Development Environment
-
-**With uv (recommended):**
 ```bash
-# Install dev dependencies
-uv sync --dev
-
-# Run linting (performance-optimized rules)
-uv run python scripts/lint.py
-
-# Quick lint check
-uv run ruff check tinybytecnn/
-
-# Format code  
-uv run ruff format .
+uv sync --dev  # Install dependencies
+uv run python scripts/lint.py  # Performance-focused linting
+python3 -m unittest discover tests/  # Run tests
 ```
-
-**With pip:**
-```bash
-# Install development tools
-python scripts/setup_dev.py
-
-# Run linting
-python scripts/lint.py
-```
-
-### Linting Philosophy
-
-PinyByteCNN uses performance-focused linting rules:
-
-- **Core library** (`tinybytecnn/`): Strict quality checks
-- **Performance exceptions**: Complexity rules relaxed for optimization
-- **Documentation**: Optional (prioritizes code density)  
-- **Tests/Scripts**: Lenient rules for development flexibility
-
-### Contributing
-
-1. Run `python scripts/setup_dev.py` to install dev tools
-2. Ensure `python scripts/lint.py` passes on core library
-3. Maintain 80%+ test coverage with `python scripts/coverage_analyzer.py`
-4. Add tests for new features
 
 ## License
 
