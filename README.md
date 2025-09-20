@@ -1,5 +1,6 @@
 # PinyByteCNN
 
+[![PyPI version](https://badge.fury.io/py/pinybytecnn.svg)](https://badge.fury.io/py/pinybytecnn)
 [![Codecov](https://codecov.io/gh/mitchins/pinybytecnn/branch/main/graph/badge.svg)](https://codecov.io/gh/mitchins/pinybytecnn)
 
 Pure Python implementation of ByteCNN for toxicity detection and edge deployment.
